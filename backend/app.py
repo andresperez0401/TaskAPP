@@ -5,6 +5,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from models.models import db, Usuario  
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, JWTManager
+from datetime import timedelta
 
 load_dotenv()
 
@@ -38,12 +39,20 @@ def index():
     return jsonify({"mensaje": "Hola desde Flask!"})
 
 
+# POST /register: Registro de nuevos usuarios.
+# ○ POST /login: Autenticación de usuarios y generación de tokens.
+# ○ POST /logout: Invalida el token del usuario.
+# ○ GET /tasks: Devuelve las tareas del usuario autenticado.
+# ○ POST /tasks: Crea una nueva tarea asociada al usuario autenticado.
+# ○ PUT /tasks/<id>: Actualiza una tarea existente.
+# ○ DELETE /tasks/<id>: Elimina una tarea.
+
 
 #------------------------------------------------------- Usuario -----------------------------------------------------------------------
 
 
 # Ruta para crear un nuevo usuario
-@app.route('/usuarios', methods=['POST'])
+@app.route('/register', methods=['POST'])
 def crear_usuario():
     
     # Se valida que hayan datos en el cuerpo de la solicitud
@@ -77,9 +86,6 @@ def crear_usuario():
 
     return jsonify({"mensaje": "Usuario creado exitosamente", "usuario": nuevo_usuario.serialize()}), 201
 
-#Finaliza la ruta de creación de usuario
-#----------------------------------------------------------------------------------------------------------------
-
 
 
 # Ruta para obtener todos los usuarios
@@ -87,6 +93,48 @@ def crear_usuario():
 def obtener_usuarios():
     usuarios = Usuario.query.all()
     return jsonify([u.serialize() for u in usuarios]), 200
+
+
+
+# Ruta para hacer login
+@app.route('/login', methods=['POST'])
+def login():
+
+    # Se valida que hayan datos en el cuerpo de la solicitud, en este caso requerido el email y la clave
+    data = request.get_json() or {}
+    if not data:
+        return jsonify({'error': 'No se recibieron datos'}), 400
+    
+    # Se valida que lleguen todos los campos necesarios en la solicitud
+    required_fields = ['email', 'clave']
+    empty_fields = [field for field in required_fields if not data.get(field)]
+    if empty_fields:
+        return jsonify({
+            'error': 'Algunos campos están vacíos o faltan',
+            'Campos vacíos o faltantes': empty_fields
+        }), 400
+    
+    # Buscamos al usuario por email y clave
+    usuario = Usuario.query.filter_by(email=data.get('email'), clave=data.get('clave')).first()
+    # Si no se encuentra el usuario, devolvemos un error
+    if not usuario:
+        return jsonify({'error': 'email o clave incorrectos'}), 401
+    
+    # Si se encuentra el usuario, generamos un token de acceso
+    access_token = create_access_token(
+        identity=usuario.email,
+        expires_delta=timedelta(hours=1)
+    )
+
+    return jsonify({'mensaje' : 'Usuario Logeado Exitosamente', 'usuario' : usuario.serialize(), 'token': access_token}), 200
+
+
+
+
+
+
+
+
 
 
 
