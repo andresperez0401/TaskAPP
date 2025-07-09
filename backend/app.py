@@ -239,7 +239,8 @@ def crear_tarea():
     # Creamos la nueva tarea
     nueva_tarea = Tarea(
         titulo=data['titulo'],
-        descripcion=data.get('descripcion'),
+        descripcion=data.get('descripcion', ''), 
+        completada = False,
         idUsuario=usuario.idUsuario
     )
 
@@ -248,6 +249,76 @@ def crear_tarea():
     db.session.commit()
 
     return jsonify({"mensaje": "Tarea creada exitosamente", "tarea": nueva_tarea.serialize()}), 201
+
+
+
+# Ruta para actualizar una tarea
+@app.route('/tasks/<int:id>', methods=['PUT'])
+@jwt_required()
+def actualizar_tarea(id):
+
+    # Obtenemos el email del usuario autenticado
+    email = get_jwt_identity()
+
+    # Buscamos al usuario por email
+    usuario = Usuario.query.filter_by(email=email).first()
+    
+    # Si no se encuentra el usuario, devolvemos un error
+    if not usuario:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+    
+    # Buscamos la tarea por id
+    tarea = Tarea.query.filter_by(idTarea=id, idUsuario=usuario.idUsuario).first()
+    
+    # Si no se encuentra la tarea, devolvemos un error
+    if not tarea:
+        return jsonify({'error': 'Tarea no encontrada para el usuario: ' + email}), 404
+    
+    # Se valida que hayan datos en el cuerpo de la solicitud
+    data = request.get_json() or {}
+    
+    # Actualizamos los campos de la tarea
+    tarea.titulo = data.get('titulo', tarea.titulo)
+    tarea.descripcion = data.get('descripcion', tarea.descripcion)
+    tarea.completada = data.get('completada', tarea.completada)
+
+    # Guardamos los cambios en la base de datos
+    db.session.commit()
+
+    return jsonify({"mensaje": "Tarea actualizada exitosamente", "tarea": tarea.serialize()}), 200
+
+
+
+# Ruta para eliminar una tarea
+@app.route('/tasks/<int:id>', methods=['DELETE'])
+@jwt_required()
+def eliminar_tarea(id):
+
+    # Obtenemos el email del usuario autenticado
+    email = get_jwt_identity()
+
+    # Buscamos al usuario por email
+    usuario = Usuario.query.filter_by(email=email).first()
+    
+    # Si no se encuentra el usuario, devolvemos un error
+    if not usuario:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+    
+    # Buscamos la tarea por id
+    tarea = Tarea.query.filter_by(idTarea=id, idUsuario=usuario.idUsuario).first()
+    
+    # Si no se encuentra la tarea, devolvemos un error
+    if not tarea:
+        return jsonify({'error': 'Tarea no encontrada para el usuario: ' + email}), 404
+    
+    # Eliminamos la tarea de la base de datos
+    db.session.delete(tarea)
+    db.session.commit()
+
+    return jsonify({"mensaje": "Tarea eliminada exitosamente"}), 200
+
+
+#------------------------------------------------------- Terminan las rutas de Tareas ----------------------------------------------------------
 
 
 
