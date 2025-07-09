@@ -4,7 +4,7 @@ from flask_migrate import Migrate, upgrade
 from flask_cors import CORS
 from dotenv import load_dotenv
 from models.models import db, Usuario  
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, JWTManager
+from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt, JWTManager
 from datetime import timedelta
 
 load_dotenv()
@@ -28,10 +28,45 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 Migrate(app, db, compare_type=True)
 
-#---------------------------------------------------- Termina la BD configuración -----------------------------------------------------
+#---------------------------------------------------- Termina la configuracion de BD --------------------------------------------------
 
 
-#----------------------------------------------------- Rutas --------------------------------------------------------------------------
+
+# ------------------------------------------------------------- Configuraciones de JWT ------------------------------------------------
+
+app.config["JWT_SECRET_KEY"] = "backendeandresprivadoparalistadetareas"
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(hours=1)
+
+jwt = JWTManager(app)
+
+#Lista negra para tokens que hacen logout
+blacklist = set()  
+
+#Funcion que checkea si el token está en la lista negra
+@jwt.token_in_blocklist_loader
+def check_token(jwt_header, jwt_payload):
+    jti = jwt_payload["jti"]
+    return jti in blacklist
+
+# Mensaje para tokens revocados (lista negra)
+@jwt.revoked_token_loader
+def revoked_token_callback(jwt_header, jwt_payload):
+    return jsonify({
+        "error": "Este token fue invalidado. Por favor, haz login de nuevo."
+    }), 401
+
+# Mensaje para tokens expirados
+@jwt.expired_token_loader
+def expired_token_callback(jwt_header, jwt_payload):
+    return jsonify({
+        "error": "El token ha expirado. Por favor, vuelve a iniciar sesión."
+    }), 401
+
+# ------------------------------------------------------ Terminan las configuraciones de JWT -----------------------------------------
+
+
+
+#--------------------------------------------------------------- Rutas ---------------------------------------------------------------
 
 #Ruta base
 @app.route('/')
@@ -49,7 +84,6 @@ def index():
 
 
 #------------------------------------------------------- Usuario -----------------------------------------------------------------------
-
 
 # Ruta para crear un nuevo usuario
 @app.route('/register', methods=['POST'])
@@ -130,9 +164,25 @@ def login():
 
 
 
+# Ruta para cerrar sesión
+@app.route('/logout', methods=['POST'])
+@jwt_required()
+def logout():
+
+    # Obtenemos el token actual
+    jti = get_jwt()['jti']
+
+    # Agregamos el token a la lista negra para invalidarlo
+    blacklist.add(jti)
+
+    return jsonify({'mensaje': 'Logout exitoso'}), 200
+
+
+#------------------------------------------------------- Terminan las rutas de Usuario ----------------------------------------------------------
 
 
 
+#----------------------------------------------------------------- Tareas -----------------------------------------------------------------------
 
 
 
