@@ -3,14 +3,14 @@ from flask import Flask, jsonify, request
 from flask_migrate import Migrate, upgrade
 from flask_cors import CORS
 from dotenv import load_dotenv
-from models.models import db, Usuario  
+from models.models import db, Usuario, Tarea  
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt, JWTManager
 from datetime import timedelta
 
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)  # Permite solicitudes desde otros orígenes (React)
+CORS(app)  
 
 
 #----------------------------------------------------- Base de Datos -----------------------------------------------------------------
@@ -185,6 +185,69 @@ def logout():
 #----------------------------------------------------------------- Tareas -----------------------------------------------------------------------
 
 
+# Ruta para obtener las tareas del usuario autenticado
+@app.route('/tasks', methods=['GET'])
+@jwt_required()
+def obtener_tareas():
+
+    # Obtenemos el email del usuario autenticado
+    email = get_jwt_identity()
+
+    # Buscamos al usuario por email
+    usuario = Usuario.query.filter_by(email=email).first()
+    
+    # Si no se encuentra el usuario, devolvemos un error
+    if not usuario:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+    
+    # Obtenemos las tareas del usuario
+    tareas = usuario.tareas
+
+    return jsonify([t.serialize() for t in tareas]), 200
+
+
+
+# Ruta para crear una nueva tarea
+@app.route('/tasks', methods=['POST'])
+@jwt_required()
+def crear_tarea():
+
+    # Obtenemos el email del usuario autenticado
+    email = get_jwt_identity()
+
+    # Buscamos al usuario por email
+    usuario = Usuario.query.filter_by(email=email).first()
+    
+    # Si no se encuentra el usuario, devolvemos un error
+    if not usuario:
+        return jsonify({'error': 'Usuario no encontrado'}), 404
+    
+    # Se valida que hayan datos en el cuerpo de la solicitud
+    data = request.get_json() or {}
+    if not data:
+        return jsonify({'error': 'No se recibieron datos'}), 400
+    
+    # Se valida que lleguen todos los campos necesarios en la solicitud
+    required_fields = ['titulo']
+    empty_fields = [f for f in required_fields if not data.get(f)]
+    if empty_fields:
+        return jsonify({
+            'error': 'Algunos campos están vacíos o faltan',
+            'Campos vacíos o faltantes': empty_fields
+        }), 400
+    
+    # Creamos la nueva tarea
+    nueva_tarea = Tarea(
+        titulo=data['titulo'],
+        descripcion=data.get('descripcion'),
+        idUsuario=usuario.idUsuario
+    )
+
+    # Agregamos la nueva tarea a la sesión y la guardamos en la base de datos
+    db.session.add(nueva_tarea)
+    db.session.commit()
+
+    return jsonify({"mensaje": "Tarea creada exitosamente", "tarea": nueva_tarea.serialize()}), 201
 
 
 
