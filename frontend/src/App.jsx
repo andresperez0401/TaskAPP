@@ -20,7 +20,7 @@ const AppContent = () => {
     <>
       <Routes>
         <Route path="/" element={<StartPage />} />
-        {/* <Route path="/home" element={<ListPaddel />} /> */}
+        
       </Routes>
       {!hideLayout && <Footer />}
 
