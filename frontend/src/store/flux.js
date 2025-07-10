@@ -42,7 +42,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
       register: async (nombre, email, clave) => {
         try {
-          const response = await fetch(`${process.env.BACKEND_URL}/register`, {
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/register`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -71,7 +71,7 @@ const getState = ({ getStore, getActions, setStore }) => {
 
       login: async (email, clave) => {
         try {
-          const response = await fetch(`${process.env.BACKEND_URL}/login`, {
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/login`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -113,7 +113,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       logout: async () => {
         try {
           const token = getStore().token;
-          await fetch(`${process.env.BACKEND_URL}/logout`, {
+          await fetch(`${import.meta.env.VITE_BACKEND_URL}/logout`, {
             method: "POST",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -141,7 +141,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       getTasks: async () => {
         try {
           const token = getStore().token;
-          const response = await fetch(`${process.env.BACKEND_URL}/tasks`, {
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/tasks`, {
             method: "GET",
             headers: {
               Authorization: `Bearer ${token}`,
@@ -171,7 +171,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       createTask: async (titulo, descripcion) => {
         try {
           const token = getStore().token;
-          const response = await fetch(`${process.env.BACKEND_URL}/tasks`, {
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/tasks`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -204,7 +204,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       updateTask: async (id, titulo, descripcion, completada) => {
         try {
           const token = getStore().token;
-          const response = await fetch(`${process.env.BACKEND_URL}/tasks/${id}`, {
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/tasks/${id}`, {
             method: "PUT",
             headers: {
               "Content-Type": "application/json",
@@ -240,7 +240,7 @@ const getState = ({ getStore, getActions, setStore }) => {
       deleteTask: async (id) => {
         try {
           const token = getStore().token;
-          const response = await fetch(`${process.env.BACKEND_URL}/tasks/${id}`, {
+          const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/tasks/${id}`, {
             method: "DELETE",
             headers: {
               Authorization: `Bearer ${token}`,

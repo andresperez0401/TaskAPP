@@ -3,6 +3,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Context } from '../store/appContext';
 import { useContext } from 'react';
+import '../styles/Navbar.css';
 
 const Navbar = () => {
   const { store, actions } = useContext(Context);
@@ -16,21 +17,23 @@ const Navbar = () => {
   };
 
   return (
-    <nav className="navbar navbar-expand-lg navbar-dark bg-dark">
-      <div className="container">
-        <Link className="navbar-brand" to="/tasks">TaskAPP</Link>
+    <nav className="navbar">
+      <div className="navbar-container">
+        <Link to="/" className="navbar-brand">TaskAPP</Link>
         
-        {store.usuario && (
-          <div className="d-flex align-items-center">
-            <span className="text-light me-3">Hola, {store.usuario.nombre}</span>
-            <button 
-              className="btn btn-outline-light"
-              onClick={handleLogout}
-            >
-              Cerrar Sesión
-            </button>
-          </div>
-        )}
+        <div className="navbar-links">
+          {store.usuario ? (
+            <>
+              <span className="navbar-greeting">Hola, {store.usuario.nombre}</span>
+              <button className="navbar-button" onClick={handleLogout}>Cerrar Sesión</button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" className="navbar-link">Iniciar Sesión</Link>
+              <Link to="/register" className="navbar-link">Registrarse</Link>
+            </>
+          )}
+        </div>
       </div>
     </nav>
   );
