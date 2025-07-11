@@ -5,6 +5,7 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from models.models import db, Usuario, Tarea  
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity, get_jwt, JWTManager
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta
 
 load_dotenv()
@@ -103,6 +104,10 @@ def crear_usuario():
             'Campos vacíos o faltantes': empty_fields
         }), 400
     
+    hashed = generate_password_hash(data['clave'],
+                                    method='pbkdf2:sha256',
+                                    salt_length=16)
+    
     # Validamos que el email ingresado no exista en base de datos 
     if Usuario.query.filter_by(email=data.get('email')).first():
         return jsonify({'error': 'El email ya está en uso'}), 400
@@ -111,7 +116,7 @@ def crear_usuario():
     nuevo_usuario = Usuario(
         nombre=data['nombre'],
         email=data['email'],
-        clave=data['clave'] 
+        clave=hashed 
     )
 
     # Agregamos el nuevo usuario a la sesión y lo guardamos en la base de datos
@@ -148,11 +153,15 @@ def login():
             'Campos vacíos o faltantes': empty_fields
         }), 400
     
-    # Buscamos al usuario por email y clave
-    usuario = Usuario.query.filter_by(email=data.get('email'), clave=data.get('clave')).first()
+    # Buscamos al usuario por email
+    usuario = Usuario.query.filter_by(email=data.get('email')).first()
     # Si no se encuentra el usuario, devolvemos un error
     if not usuario:
         return jsonify({'error': 'email o clave incorrectos'}), 401
+    
+    # Verificamos la clave ingresada con la almacenada en la base de datos
+    if not check_password_hash(usuario.clave, data.get('clave')):
+        return jsonify({'error': 'clave incorrecta'}), 401
     
     # Si se encuentra el usuario, generamos un token de acceso
     access_token = create_access_token(
