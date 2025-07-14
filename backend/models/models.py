@@ -22,7 +22,7 @@ class Usuario(db.Model):
         return {
             'idUsuario': self.idUsuario,
             'nombre': self.nombre,
-            'email': self.email
+            'email': self.email,
         }
     
 
