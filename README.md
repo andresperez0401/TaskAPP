@@ -87,7 +87,7 @@ npm install
 
 # Dirección del backend
 
-VITE_API_URL=http://localhost:5000
+VITE_BACKEND_URL=http://localhost:5000
 ```
 
 #### Paso 4: Levantar el frontend
